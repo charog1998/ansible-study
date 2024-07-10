@@ -63,19 +63,24 @@ class AnsibleError(Exception):
     # @property装饰器
     # 帮一些属性更为简便地添加getter、setter、deleter
     # class C(object):
-    #     def getx(self): return self._x
-    #     def setx(self, value): self._x = value
-    #     def delx(self): del self._x x = property(getx, setx, delx, "I'm the 'x' property.")
-    # 
-    # 可以写成如下:
-    #
-    # class C(object):
-    #     @property def x(self):
-    #         "I am the 'x' property." return self._x
-    #     @x.setter def x(self, value):
-    #         self._x = value
-    #     @x.deleter def x(self):
-    #         del self._x
+    #   _x = None
+    #   @property 
+    #   def x(self):
+    #     return self._x
+    #   @x.setter 
+    #   def x(self, value):
+    #     self._x = abs(value)
+    #   @x.deleter 
+    #   def x(self):
+    #     del self._x
+
+    #   c = C()
+    #   c.x = -1
+    #   print(c.x)
+    # 可以看到在赋值时调用了setter将绝对值赋给了x
+
+    # 如果将setter去掉则会报错提示x属性没有setter方法（即只读变量）
+    # AttributeError: property 'x' of 'C' object has no setter
     @property
     def message(self):
         # we import this here to prevent an import loop problem,
@@ -108,6 +113,8 @@ class AnsibleError(Exception):
     def __repr__(self):
         return self.message
 
+
+    # 这个方法用来获取发生错误的行以及它的前一行内容
     def _get_error_lines_from_file(self, file_name, line_number):
         '''
         Returns the line in the file which corresponds to the reported error
@@ -120,7 +127,7 @@ class AnsibleError(Exception):
 
         with open(file_name, 'r') as f:
             lines = f.readlines()
-
+            # 如果行数超范围的话，会返回最后一行
             # In case of a YAML loading error, PyYAML will report the very last line
             # as the location of the error. Avoid an index error here in order to
             # return a helpful message.
@@ -128,6 +135,7 @@ class AnsibleError(Exception):
             if line_number >= file_length:
                 line_number = file_length - 1
 
+            # 如果选择的行是空行的话，一直向上找到不是空行的行返回
             # If target_line contains only whitespace, move backwards until
             # actual code is found. If there are several empty lines after target_line,
             # the error lines would just be blank, which is not very helpful.
@@ -136,11 +144,15 @@ class AnsibleError(Exception):
                 line_number -= 1
                 target_line = lines[line_number]
 
+            # 找到目标行的上一行
             if line_number > 0:
                 prev_line = lines[line_number - 1]
 
         return (target_line, prev_line)
 
+
+    # 这个函数用来显示报错的行内容，指出错误位置的'^'
+    # 对于常见的语法错误给出原因和修改建议
     def _get_extended_error(self):
         '''
         Given an object reporting the location of the exception in a file, return
@@ -157,7 +169,15 @@ class AnsibleError(Exception):
 
         try:
             (src_file, line_number, col_number) = self.obj.ansible_pos
-            error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
+            
+            # YAML_POSITION_DETAILS：一个用来作为输出模板的字符串
+            # YAML_POSITION_DETAILS = """\
+            #     The error appears to be in '%s': line %s, column %s, but may
+            #     be elsewhere in the file depending on the exact syntax problem.
+            # """
+            error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number) # 文件名，行数，列数
+            
+            # 这里and前面的这个判断条件没看懂，后面那个是说只有在这个Error类的_show_content属性为True时才会显示详细的错误信息
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
                 target_line = to_text(target_line)

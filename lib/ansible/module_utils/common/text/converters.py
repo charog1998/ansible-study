@@ -214,6 +214,12 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         # to decode.
         return obj.decode(encoding, errors)
 
+    # 当接收的obj既不是文本类型也不是二进制流
+    # 采用四种策略来处理这种非字符串类：
+    # 1. simplerepr：尝试调用obj的_str和_repr方法来转成字符串
+    # 2. passthru：直接原样把obj传出
+    # 3. empty：传回空字符串
+    # 4. strict：抛出TypeError报错
     # Note: We do these last even though we have to call to_text again on the
     # value because we're optimizing the common case
     if nonstring == 'simplerepr':
