@@ -19,7 +19,7 @@ import warnings
 # mask vendored content below this package from being accessed as an ansible subpackage
 __path__ = []
 
-
+# 这个方法看起来主要的作用是，把这个文件夹添加到系统路径PATH下
 def _ensure_vendored_path_entry():
     """
     Ensure that any downstream-bundled content beneath this package is available at the top of sys.path
@@ -35,8 +35,10 @@ def _ensure_vendored_path_entry():
             sys.path.remove(vendored_path_entry)
         sys.path.insert(0, vendored_path_entry)
 
+        # 这里会获取所有已经加载的模块，并且和vendored_module_names求交集
         already_loaded_vendored_modules = set(sys.modules.keys()).intersection(vendored_module_names)
 
+        # 如果这个文件夹下的模块已经被加载到内存了，会提示告警
         if already_loaded_vendored_modules:
             warnings.warn('One or more Python packages bundled by this ansible-core distribution were already '
                           'loaded ({0}). This may result in undefined behavior.'.format(', '.join(sorted(already_loaded_vendored_modules))))
