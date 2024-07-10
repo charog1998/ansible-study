@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+# 这个文件包含了一些模板字符串，用来提示yaml错误时的错误信息，和修改的提示
+
 from __future__ import annotations
 
 __all__ = [
