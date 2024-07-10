@@ -59,6 +59,23 @@ class AnsibleError(Exception):
         self.obj = obj
         self.orig_exc = orig_exc
 
+
+    # @property装饰器
+    # 帮一些属性更为简便地添加getter、setter、deleter
+    # class C(object):
+    #     def getx(self): return self._x
+    #     def setx(self, value): self._x = value
+    #     def delx(self): del self._x x = property(getx, setx, delx, "I'm the 'x' property.")
+    # 
+    # 可以写成如下:
+    #
+    # class C(object):
+    #     @property def x(self):
+    #         "I am the 'x' property." return self._x
+    #     @x.setter def x(self, value):
+    #         self._x = value
+    #     @x.deleter def x(self):
+    #         del self._x
     @property
     def message(self):
         # we import this here to prevent an import loop problem,
@@ -66,12 +83,16 @@ class AnsibleError(Exception):
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
         message = [self._message]
+        # 如果传入的obj是AnsibleBaseYAMLObject的子类
+        # 用_get_extended_error这个方法把错误信息提取出来
         if isinstance(self.obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error and not self._suppress_extended_error:
                 message.append(
                     '\n\n%s' % to_native(extended_error)
                 )
+        # 如果传入的obj不是AnsibleBaseYAMLObject的子类
+        # 将orig_exc即original exception的信息提取出来
         elif self.orig_exc:
             message.append('. %s' % to_native(self.orig_exc))
 
