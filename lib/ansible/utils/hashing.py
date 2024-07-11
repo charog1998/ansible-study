@@ -25,6 +25,10 @@ try:
     from hashlib import md5 as _md5
 except ImportError:
     # Assume we're running in FIPS mode here
+    
+    # 注：FIPS（Federal Information Processing Standards，联邦信息处理标准）140-2
+    # 是NIST（National Institute of Standards and Technology，美国国家标准与技术研究院）
+    # 颁布的针对密码算法安全的一个标准，它规定了一个安全系统中的密码模块应该满足的安全性要求。
     _md5 = None
 
 from ansible.errors import AnsibleError
@@ -33,29 +37,38 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 def secure_hash_s(data, hash_func=sha1):
     ''' Return a secure hash hex digest of data. '''
+    # 计算数据的哈希值
 
+    # 利用sha1创建了一个sha1对象
     digest = hash_func()
     data = to_bytes(data, errors='surrogate_or_strict')
+    # 将digest中的数据进行更新
     digest.update(data)
+    # 返回它的哈希值
     return digest.hexdigest()
 
 
 def secure_hash(filename, hash_func=sha1):
     ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
+    # 计算文件的哈希值
 
+    # 如果这个文件名路径不存在或者是文件夹，直接返回None
     if not os.path.exists(to_bytes(filename, errors='surrogate_or_strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
         return None
     digest = hash_func()
     blocksize = 64 * 1024
     try:
+        # 尝试不断读取blocksize大小的数据并更新到digest中
         infile = open(to_bytes(filename, errors='surrogate_or_strict'), 'rb')
         block = infile.read(blocksize)
         while block:
             digest.update(block)
             block = infile.read(blocksize)
         infile.close()
+    # 如果有IO错误则报错
     except IOError as e:
         raise AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
+    # 计算并返回哈希值
     return digest.hexdigest()
 
 
@@ -63,7 +76,7 @@ def secure_hash(filename, hash_func=sha1):
 checksum = secure_hash
 checksum_s = secure_hash_s
 
-
+# 向后兼容，自 ansible-1.8 起所有这些模块必须返回上面这个checksum
 #
 # Backwards compat functions.  Some modules include md5s in their return values
 # Continue to support that for now.  As of ansible-1.8, all of those modules

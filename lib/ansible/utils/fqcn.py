@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 
+# 这个方法看起来是把模块的名称补全变成 “ 全称 ”
 def add_internal_fqcns(names):
     '''
     Given a sequence of action/module names, returns a list of these names
