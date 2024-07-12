@@ -20,12 +20,31 @@ from __future__ import annotations
 from ansible.module_utils.common.text.converters import to_text
 
 
-__all__ = ('unicode_wrap',)
+__all__ = ("unicode_wrap",)
 
 
+# 这是一个装饰器，用来将函数返回值转为 text string 在python3中就是str类型
 def unicode_wrap(func, *args, **kwargs):
     """If a function returns a string, force it to be a text string.
 
     Use with partial to ensure that filter plugins will return text values.
     """
-    return to_text(func(*args, **kwargs), nonstring='passthru')
+    return to_text(func(*args, **kwargs), nonstring="passthru")
+
+
+# if __name__ == '__main__':
+#     def add(a, b):
+#         return str(a + b).encode("utf-8")
+
+
+#     from functools import partial
+
+#     # 偏函数：把unicode_wrap的第一个参数锁定为add这个函数之后的函数
+#     # a = partial(unicode_wrap, add)
+#     # 偏函数可以实现一些不错的自定义效果，比如配合int函数实现二进制转十进制：
+#     # bin2dec = partial(int, base=2)
+#     
+#     print(type(add(1, 2)))
+#     print(type(a(a=1, b=2)))
+#     # 可以看到add的返回值是bytes
+#     # 但是a的返回值已经变成strle

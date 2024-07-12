@@ -41,6 +41,8 @@ random_int = ("%08x" % random.randint(0, _MAXSIZE))[:8]
 
 
 def get_unique_id():
+    # 获取一个独一无二的id
+    # 每次调用的时候这个id会加一
     global cur_id
     cur_id += 1
     return "-".join([
@@ -64,6 +66,8 @@ def _validate_mutable_mappings(a, b):
     # If this becomes generally needed, change the signature to operate on
     # a variable number of arguments instead.
 
+    # 这个方法用于保证a，b两个参数一定是可变的映射类
+    # 如果不是的话会报错，如果是的话什么都不会发生
     if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
         myvars = []
         for x in [a, b]:
@@ -81,11 +85,18 @@ def combine_vars(a, b, merge=None):
     Return a copy of dictionaries of variables based on configured hash behavior
     """
 
+    # 只有在merge是None，且C.DEFAULT_HASH_BEHAVIOUR不是merge的情况下
+    # 才不会执行下面的merge_hash
     if merge or merge is None and C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
 
     # HASH_BEHAVIOUR == 'replace'
     _validate_mutable_mappings(a, b)
+    # 又学到了，a | b 相当于用字典b去更新字典a
+    # c = {1: 1, 2: 2}
+    # d = {3: 3, 4: 4, 1: 5}
+    # d|c -> {3: 3, 4: 4, 1: 1, 2: 2}
+    # c|d -> {1: 5, 2: 2, 3: 3, 4: 4}
     result = a | b
     return result
 
@@ -96,6 +107,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     so that keys from y take precedence over keys from x.
     (x and y aren't modified)
     """
+    # 融合两个字典
     if list_merge not in ('replace', 'keep', 'append', 'prepend', 'append_rp', 'prepend_rp'):
         raise AnsibleError("merge_hash: 'list_merge' argument can only be equal to 'replace', 'keep', 'append', 'prepend', 'append_rp' or 'prepend_rp'")
 
@@ -112,11 +124,14 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
 
     # in the following we will copy elements from y to x, but
     # we don't want to modify x, so we create a copy of it
+    # 为了不修改x，创建了一个复制作为x
     x = x.copy()
 
     # to speed things up: use dict.update if possible
     # (this `if` can be remove without impact on the function
     #  except performance)
+
+    # 尝试使用update直接融合两个字典
     if not recursive and list_merge == 'replace':
         x.update(y)
         return x
@@ -130,10 +145,14 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     for key, y_value in y.items():
         # if `key` isn't in x
         # update x and move on to the next element of y
+
+        # 如果key不在x的键中，直接把这对键值插到x中就可以
         if key not in x:
             x[key] = y_value
             continue
         # from this point we know `key` is in x
+
+        # 下面的部分都是建立在key在x的键中的情况下
 
         x_value = x[key]
 
@@ -141,6 +160,9 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # recursively "combine" them or override x's with y's element
         # depending on the `recursive` argument
         # and move on to the next element of y
+
+        # 如果 x 和 y 的值都是字典的话，根据 recursive 决定是否要递归融合
+        # 如果不递归的话直接把 y 的值写到 x 中
         if isinstance(x_value, MutableMapping) and isinstance(y_value, MutableMapping):
             if recursive:
                 x[key] = merge_hash(x_value, y_value, recursive, list_merge)
@@ -151,6 +173,13 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # if both x's element and y's element are lists
         # "merge" them depending on the `list_merge` argument
         # and move on to the next element of y
+
+        # 如果 x 和 y 的值都是序列型变量的话，根据 list_merge 决定如何合并两个序列
+        # replace：直接替换 x 中的值
+        # append：把 y 的值接在 x 的值后面
+        # prepend：把 x 的值接在 y 的值后面
+        # append_rp：在 x 值中将和 y 的值中重复的元素删掉后，再把 y 的值接在 x 的值后面
+        # prepend_rp：append_rp中同样的处理方式，只不过把 y 的值放在前面
         if isinstance(x_value, MutableSequence) and isinstance(y_value, MutableSequence):
             if list_merge == 'replace':
                 # replace x value by y's one as it has higher priority
@@ -175,6 +204,9 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
             continue
 
         # else just override x's element with y's one
+
+        # 如果key在x的键中，但是x和y的值都不是字典或者列表
+        # 直接替换
         x[key] = y_value
 
     return x
@@ -182,6 +214,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
 
 def load_extra_vars(loader):
 
+    # 又学到了，原来方法也可以setattr和getattr
     if not getattr(load_extra_vars, 'extra_vars', None):
         extra_vars = {}
         for extra_vars_opt in context.CLIARGS.get('extra_vars', tuple()):
@@ -189,7 +222,7 @@ def load_extra_vars(loader):
             extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
             if extra_vars_opt is None or not extra_vars_opt:
                 continue
-
+            
             if extra_vars_opt.startswith(u"@"):
                 # Argument is a YAML file (JSON is a subset of YAML)
                 data = loader.load_from_file(extra_vars_opt[1:])
@@ -238,6 +271,8 @@ def load_options_vars(version):
 
 
 def _isidentifier_PY3(ident):
+
+    # 用来判断是不是python3的标识符
     if not isinstance(ident, string_types):
         return False
 
