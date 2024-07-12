@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 
+# 直译为 "哨兵"
+# 感觉这个类主要作用是用来辅助一些判断
 class Sentinel:
     """
     Object which can be used to mark whether an entry as being special
@@ -44,6 +46,15 @@ class Sentinel:
             print('%s: %s' % (key, value)
     """
 
+    # 官方文档中对__new__的介绍：
+    # object.__new__(cls[, ...])
+    #     调用以创建一个 cls 类的新实例。__new__() 是一个静态方法 (因为是特例所以你不需要显式地声明)，
+    #     它会将所请求实例所属的类作为第一个参数。其余的参数会被传递给对象构造器表达式 (对类的调用)。
+    #     __new__() 的返回值应为新对象实例 (通常是 cls 的实例)。
+
+    # 这个类并没有返回一个实例而是返回了这个类本身
+    # 目的应该是为了避免一些可能的判断报错
+    # 具体效果可以看下面的例子
     def __new__(cls):
         """
         Return the cls itself.  This makes both equality and identity True for comparing the class
@@ -64,3 +75,38 @@ class Sentinel:
                 print('Sentinel value')
         """
         return cls
+
+'''
+如下代码都是判断为True的
+a = Sentinel
+b = Sentinel()
+if a is b:
+    print('ok')
+
+if b is a:
+    print('ok')
+
+if a is Sentinel:
+    print('ok')
+
+if b is Sentinel:
+    print('ok')
+
+if a is Sentinel():
+    print('ok')
+
+if b is Sentinel():
+    print('ok')
+'''
+
+'''
+对比下面的代码可以看出修改Sentinel().__new__方法的用处
+
+a = set
+b = set()
+if a is not b:
+    print('ok') # 会显示'ok'
+
+if b is not a:
+    print('ok') # 会显示'ok'
+'''

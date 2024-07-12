@@ -28,10 +28,13 @@ from ansible.utils.display import Display
 display = Display()
 
 
+# CONTROLPERSIST，持久化socket连接，短时间内无需密码可再次建立连接
+# 这个字典用于保存某个命令是否开启了 CONTROLPERSIST
 _HAS_CONTROLPERSIST = {}  # type: dict[str, bool]
 
 
 def check_for_controlpersist(ssh_executable):
+    # 用于判断传入的那个连接方式是否设置了controlpersist
     try:
         # If we've already checked this executable
         return _HAS_CONTROLPERSIST[ssh_executable]
@@ -52,6 +55,8 @@ def check_for_controlpersist(ssh_executable):
     return has_cp
 
 
+# 设置默认的传输方式，如果ssh没开启controlpersist，同时paramiko又可用的话就用paramiko
+# 否则就用ssh
 def set_default_transport():
 
     # deal with 'smart' connection .. one time ..

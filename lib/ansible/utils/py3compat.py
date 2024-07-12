@@ -16,6 +16,8 @@ display = Display()
 
 
 def __getattr__(name):
+    # ansible.utils.py3compat 在获取environ属性会转为os.environ，即系统的环境变量
+    # 如果获取其他属性的话会报AttributeError错误
     if name != 'environ':
         raise AttributeError(name)
 

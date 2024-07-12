@@ -20,5 +20,6 @@ from __future__ import annotations
 import shlex
 
 
+# 单纯地把shlex.split取出来了
 # shlex.split() wants Unicode (i.e. ``str``) input on Python 3
 shlex_split = shlex.split
