@@ -18,6 +18,18 @@ from __future__ import annotations
 
 
 # 这个方法看起来是把模块的名称补全变成 “ 全称 ”
+# Fully Qualified Collection Name
+# 以下引用自官方文档：
+# The full definition of a module, plugin, or role hosted within a collection, 
+# in the form <namespace.collection.content_name>. 
+# Allows a Playbook to refer to a specific module or plugin from a specific 
+# source in an unambiguous manner, for example, community.grafana.grafana_dashboard. 
+# The FQCN is required when you want to specify the exact source of a plugin. For example, 
+# if multiple collections contain a module plugin called user, 
+# the FQCN specifies which one to use for a given task. 
+# When you have multiple collections installed, 
+# the FQCN is always the explicit and authoritative indicator of which 
+# collection to search for the correct plugin for each task.
 def add_internal_fqcns(names):
     '''
     Given a sequence of action/module names, returns a list of these names
